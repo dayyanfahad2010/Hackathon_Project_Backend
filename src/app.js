@@ -9,6 +9,7 @@ import publicRoutes from "./routes/publicRoutes.js";
 import assetRoutes from "./routes/assetRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import issueRoutes from "./routes/issueRoutes.js";
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/public",publicRoutes);
 app.use("/api/assets",assetRoutes);
 app.use("/api/dashboard",dashboardRoutes);
 app.use("/api/ai",aiRoutes);
+app.use("/api/issue",issueRoutes);
 app.use(errorMiddleware);
 
 export default app;
