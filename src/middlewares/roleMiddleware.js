@@ -7,14 +7,17 @@ export const role = (...allowedRoles) => {
           message: "Unauthorized. Please login.",
         });
       }
+console.log(allowedRoles.includes(req.user.role));
+console.log(req.user);
 
       if (!allowedRoles.includes(req.user.role)) {
         return res.status(403).json({
           success: false,
-          message: "Forbidden. You don't have permission to perform this action.",
+          message: req.user,
+          data:"jaaaniii"
         });
       }
-
+console.log("role middleware mai request ayee...");
       next();
     } catch (error) {
       console.error("Role Middleware Error:", error);

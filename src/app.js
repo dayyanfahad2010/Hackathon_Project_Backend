@@ -33,7 +33,7 @@ app.use("/api/auth",authRoutes);
 app.use("/api/maintenance",maintenanceRoutes);
 app.use("/api/history",historyRoutes);
 app.use("/api/public",publicRoutes);
-app.use("/api/asset",assetRoutes);
+app.use("/api/assets",assetRoutes);
 app.use("/api/dashboard",dashboardRoutes);
 app.use("/api/ai",aiRoutes);
 app.use(errorMiddleware);

@@ -5,10 +5,10 @@ import { createAsset, deleteAsset, getAssetById, getAssets, updateAsset } from "
 
 const assetRoutes = express.Router();
 
-assetRoutes.post("/", authMiddleware, role("Admin"), createAsset);
+assetRoutes.post("/", authMiddleware, role("admin"), createAsset);
 assetRoutes.get("/", authMiddleware, getAssets);
 assetRoutes.get("/:id", authMiddleware, getAssetById);
-assetRoutes.patch("/:id", authMiddleware, role("Admin"), updateAsset);
-assetRoutes.delete("/:id", authMiddleware, role("Admin"), deleteAsset);
+assetRoutes.patch("/:id", authMiddleware, role("admin"), updateAsset);
+assetRoutes.delete("/:id", authMiddleware, role("admin"), deleteAsset);
 
 export default assetRoutes;

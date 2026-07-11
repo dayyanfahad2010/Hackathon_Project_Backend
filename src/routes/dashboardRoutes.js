@@ -12,21 +12,21 @@ const dashboardRoutes = express.Router();
 dashboardRoutes.get(
   "/admin/summary",
   authMiddleware,
-  role("Admin"),
+  role("admin"),
   getAdminSummary
 );
 
 dashboardRoutes.get(
   "/technician/summary",
   authMiddleware,
-  role("Technician"),
+  role("technician"),
   getTechnicianSummary
 );
 
 dashboardRoutes.get(
   "/issues",
   authMiddleware,
-  role("Admin", "Technician"),
+  role("admin", "technician"),
   getIssues
 );
 
