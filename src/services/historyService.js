@@ -1,4 +1,4 @@
-import { History } from "../models/history.js";
+import { History } from "../models/History.js";
 
 export const createHistory = async ({
   asset,
