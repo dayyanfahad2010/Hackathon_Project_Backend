@@ -133,5 +133,16 @@ const logout = (req, res,next) => {
     next(error);
   }
 };
+const profile = async (req, res, next) => {
+  try {
+    successRes(
+      res,
+      "Profile fetched successfully.",
+      req.user
+    );
+  } catch (error) {
+    next(error);
+  }
+};
 
-export { signUp, login, forgotPassword, resetPassword ,logout};
+export { signUp, login, forgotPassword, resetPassword ,logout,profile};

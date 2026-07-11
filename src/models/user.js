@@ -11,13 +11,12 @@ const userSchema = new mongoose.Schema({
         required : true,
         type:String
     },
-        role: {
+    role: {
         type:String,
         enum:[
-            "user",
+            "technician",
             "admin"
         ],
-        default:"user"
     },
     otp:{
         type:String,
