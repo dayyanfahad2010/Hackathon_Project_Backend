@@ -23,7 +23,7 @@ app.set("trust proxy", 1);
 const corsOptions = {
   origin: [
     "http://localhost:5173",
-    "https://hackathon-project-sigma-three.vercel.app",
+    "https://hackathon-frontend-steel-six-blush.vercel.app",
   ], 
   credentials: true, 
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
