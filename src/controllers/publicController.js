@@ -2,6 +2,8 @@ import { Asset } from "../models/Asset.js";
 import { History } from "../models/History.js";
 import { Issue } from "../models/Issue.js";
 import successRes from "../responseHandler/successResponse.js";
+import { createHistory } from "../services/historyService.js";
+import uploadImages from "../utils/uploadImages.js";
 
 export const getPublicAsset = async (req, res,next) => {
   try {
@@ -46,6 +48,31 @@ export const reportIssue = async (req, res,next) => {
       throw error;
     }
 
+    // Evidence can arrive either as uploaded files (multipart, from the QR
+    // report form) or as an already-hosted URL array (JSON requests).
+    let evidenceUrls = [];
+    if (req.files?.length) {
+      const uploaded = await uploadImages(req.files);
+      evidenceUrls = uploaded.map((f) => f.url);
+    } else if (Array.isArray(evidence)) {
+      evidenceUrls = evidence;
+    } else if (typeof evidence === "string" && evidence) {
+      try {
+        evidenceUrls = JSON.parse(evidence);
+      } catch {
+        evidenceUrls = [evidence];
+      }
+    }
+
+    let parsedAiSuggestions = aiSuggestions;
+    if (typeof aiSuggestions === "string" && aiSuggestions) {
+      try {
+        parsedAiSuggestions = JSON.parse(aiSuggestions);
+      } catch {
+        parsedAiSuggestions = undefined;
+      }
+    }
+
     const issueNumber = `ISS-${Date.now()}`;
 
     const issue = await Issue.create({
@@ -57,8 +84,8 @@ export const reportIssue = async (req, res,next) => {
       priority,
       reporterName,
       reporterEmail,
-      evidence,
-      aiSuggestions,
+      evidence: evidenceUrls,
+      aiSuggestions: parsedAiSuggestions,
     });
 
   await createHistory({
@@ -70,7 +97,7 @@ export const reportIssue = async (req, res,next) => {
     asset.status = "Issue Reported";
     await asset.save();
 
-   successRes(res,"Issue reported successfully.",asset);
+   successRes(res,"Issue reported successfully.",{ asset, issue });
   } catch (error) {
     next(error);
   }

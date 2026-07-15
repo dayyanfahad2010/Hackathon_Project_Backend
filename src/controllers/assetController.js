@@ -69,8 +69,8 @@ export const getAssets = async (req, res,next) => {
     if (location) query.location = location;
 
     const assets = await Asset.find(query)
-      .populate("assignedTechnician", "name email")
-      .populate("createdBy", "name email")
+      .populate("assignedTechnician", "userName email")
+      .populate("createdBy", "userName email")
       .sort({ createdAt: -1 });
 
     successRes(res,"Assets fetched successfully",assets,null,200,{count:assets.length});
@@ -82,8 +82,8 @@ export const getAssets = async (req, res,next) => {
 export const getAssetById = async (req, res,next) => {
   try {
     const asset = await Asset.findById(req.params.id)
-      .populate("assignedTechnician", "name email")
-      .populate("createdBy", "name email");
+      .populate("assignedTechnician", "userName email")
+      .populate("createdBy", "userName email");
 
     if (!asset) {
       const error =new Error("Asset not found.")
@@ -121,7 +121,7 @@ export const updateAsset = async (req, res ,next) => {
       action: "Asset Updated",
       details: `${updatedAsset.name} details updated.`,
   });
-    successRes(res,"Asset updated successfully.",updateAsset)
+    successRes(res,"Asset updated successfully.",updatedAsset)
   } catch (error) {
     next(error);
   }

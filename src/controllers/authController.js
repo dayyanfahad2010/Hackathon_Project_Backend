@@ -4,9 +4,25 @@ import successRes from "../responseHandler/successResponse.js";
 import sendEmail from "../services/sendEmail.js";
 import jwt from "jsonwebtoken";
 
+// Cookie flags derived from the actual request, not NODE_ENV. This way it
+// self-corrects whether you're on plain http://localhost in dev or behind
+// HTTPS in production, without anyone needing to remember to set NODE_ENV
+// correctly (a wrong/missing NODE_ENV was previously causing the cookie to
+// never actually get stored in local dev, which looked like "logs out on
+// every refresh").
+const getCookieOptions = (req) => {
+  const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
+  return {
+    httpOnly: true,
+    secure: isHttps,
+    sameSite: isHttps ? "none" : "lax",
+    maxAge: 3 * 60 * 60 * 1000,
+  };
+};
+
 const signUp =async(req,res,next)=>{
     try {
-        const {userName ,email,password}=req.body;
+        const {userName ,email,password,role}=req.body;
         if(!userName||!email||!password) throw new Error("All Fields Are Required");
         const userFound = await User.findOne({email});
         if(userFound){
@@ -16,10 +32,12 @@ const signUp =async(req,res,next)=>{
         }
         if(password.length < 8 ) throw new Error("Password must be greater than 8 characters");
         const hashedPass = await bcrypt.hash(password,14);
+        const allowedRoles = ["admin","technician"];
         const user = await User.create({
             userName,
             email,
-            password :hashedPass
+            password :hashedPass,
+            role: allowedRoles.includes(role) ? role : "technician"
         })
         const data = {_id:user._id,email:user.email,role:user.role}
         successRes(res,"User SignUp Successfully",data);
@@ -50,13 +68,7 @@ const login =async(req,res,next)=>{
         process.env.JWT_SCRET_KEY,
         {expiresIn : '3h' }
     )
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      secure: true,   
-      sameSite: "none", 
-      maxAge: 3 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, getCookieOptions(req));
     successRes(res,"User Login Successfully",{_id,email,role},token);
     } catch (error) {
         next(error);
@@ -122,11 +134,8 @@ const resetPassword =async(req,res,next)=>{
 
 const logout = (req, res,next) => {
   try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-    });
+    const { maxAge, ...clearOptions } = getCookieOptions(req);
+    res.clearCookie("token", clearOptions);
     successRes(res,"User Logged out successfully");
     
   } catch (error) {
@@ -135,10 +144,13 @@ const logout = (req, res,next) => {
 };
 const profile = async (req, res, next) => {
   try {
+    const user=req.user;
+    console.log(req);
+    
     successRes(
       res,
       "Profile fetched successfully.",
-      req.user
+      user
     );
   } catch (error) {
     next(error);

@@ -1,22 +1,23 @@
 import { Issue } from "../models/Issue.js";
 import { Asset } from "../models/Asset.js";
 import successRes from "../responseHandler/successResponse.js";
+import { createHistory } from "../services/historyService.js";
 
 export const getIssues = async (req, res, next) => {
   try {
     let issues;
 
-    if (req.user.role === "Admin") {
+    if (req.user.role === "admin") {
       issues = await Issue.find()
         .populate("asset", "name assetCode")
-        .populate("assignedTechnician", "name email")
+        .populate("assignedTechnician", "userName email")
         .sort({ createdAt: -1 });
     } else {
       issues = await Issue.find({
         assignedTechnician: req.user._id,
       })
         .populate("asset", "name assetCode")
-        .populate("assignedTechnician", "name email")
+        .populate("assignedTechnician", "userName email")
         .sort({ createdAt: -1 });
     }
 
@@ -37,7 +38,7 @@ export const getIssueById = async (req, res, next) => {
   try {
     const issue = await Issue.findById(req.params.id)
       .populate("asset")
-      .populate("assignedTechnician", "name email");
+      .populate("assignedTechnician", "userName email");
 
     if (!issue) {
       return res.status(404).json({
@@ -126,8 +127,8 @@ export const updateIssueStatus = async (req, res, next) => {
         asset: issue.asset,
         issue: issue._id,
         performedBy: req.user._id,
-        action: "Issue Resolved",
-        details: "Issue has been resolved.",
+        action: `Issue status changed to ${status}`,
+        details: `Issue status updated to "${status}".`,
     });
     successRes(res, "Issue status updated successfully.", issue);
   } catch (error) {

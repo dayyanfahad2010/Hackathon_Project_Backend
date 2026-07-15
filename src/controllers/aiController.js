@@ -1,9 +1,12 @@
 import Groq from "groq-sdk";
 import successRes from "../responseHandler/successResponse.js";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+let groq = null;
+const getGroqClient = () => {
+  if (!process.env.GROQ_API_KEY) return null;
+  if (!groq) groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  return groq;
+};
 
 export const issueTriage = async (req, res, next) => {
   try {
@@ -19,6 +22,14 @@ export const issueTriage = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: "Complaint is required.",
+      });
+    }
+
+    const groq = getGroqClient();
+    if (!groq) {
+      return res.status(503).json({
+        success: false,
+        message: "AI triage is temporarily unavailable. Please fill in the details manually.",
       });
     }
 
@@ -100,6 +111,14 @@ export const maintenanceSummary = async (req, res, next) => {
         success: false,
         message:
           "Inspection notes and work performed are required.",
+      });
+    }
+
+    const groq = getGroqClient();
+    if (!groq) {
+      return res.status(503).json({
+        success: false,
+        message: "AI summary is temporarily unavailable. You can save the record without it.",
       });
     }
 

@@ -7,7 +7,7 @@ export const getAssetHistory = async (req, res,next) => {
     const { assetId } = req.params;
 
     const history = await History.find({ asset: assetId })
-      .populate("performedBy", "name email role")
+      .populate("performedBy", "userName email role")
       .populate("issue", "issueNumber title status")
       .sort({ createdAt: -1 });
 

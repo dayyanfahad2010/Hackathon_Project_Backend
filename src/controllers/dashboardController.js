@@ -81,17 +81,17 @@ export const getIssues = async (req, res) => {
   try {
     let issues;
 
-    if (req.user.role === "Admin") {
+    if (req.user.role === "admin") {
       issues = await Issue.find()
         .populate("asset", "name assetCode")
-        .populate("assignedTechnician", "name email")
+        .populate("assignedTechnician", "userName email")
         .sort({ createdAt: -1 });
     } else {
       issues = await Issue.find({
         assignedTechnician: req.user._id,
       })
         .populate("asset", "name assetCode")
-        .populate("assignedTechnician", "name email")
+        .populate("assignedTechnician", "userName email")
         .sort({ createdAt: -1 });
     }
 

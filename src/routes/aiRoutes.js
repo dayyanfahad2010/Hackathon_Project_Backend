@@ -4,7 +4,8 @@ import { issueTriage, maintenanceSummary } from "../controllers/aiController.js"
 
 const aiRoutes = express.Router();
 
-aiRoutes.post("/triage", authMiddleware, issueTriage);
+// Public: this runs during the QR-scan issue report flow, before any login.
+aiRoutes.post("/triage", issueTriage);
 
 aiRoutes.post(
   "/maintenance-summary",

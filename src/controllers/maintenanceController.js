@@ -2,6 +2,8 @@ import { Maintenance } from "../models/Maintenance.js";
 import { Issue } from "../models/Issue.js";
 import { Asset } from "../models/Asset.js";
 import successRes from "../responseHandler/successResponse.js";
+import { createHistory } from "../services/historyService.js";
+import uploadImages from "../utils/uploadImages.js";
 
 export const createMaintenance = async (req, res, next) => {
   try {
@@ -9,13 +11,21 @@ export const createMaintenance = async (req, res, next) => {
       issue,
       inspectionNotes,
       workPerformed,
-      parts,
       cost,
       evidence,
       finalCondition,
       nextServiceDate,
       aiSummary,
     } = req.body;
+
+    let parts = req.body.parts;
+    if (typeof parts === "string" && parts) {
+      try {
+        parts = JSON.parse(parts);
+      } catch {
+        parts = [];
+      }
+    }
 
     const issueExists = await Issue.findById(issue);
 
@@ -26,6 +36,28 @@ export const createMaintenance = async (req, res, next) => {
       });
     }
 
+    // Evidence can arrive either as uploaded files (multipart, from the
+    // technician's maintenance form) or as an already-hosted URL array.
+    let evidenceUrls = [];
+    if (req.files?.length) {
+      const uploaded = await uploadImages(req.files);
+      evidenceUrls = uploaded.map((f) => f.url);
+    } else if (Array.isArray(evidence)) {
+      evidenceUrls = evidence;
+    } else if (typeof evidence === "string" && evidence) {
+      try {
+        evidenceUrls = JSON.parse(evidence);
+      } catch {
+        evidenceUrls = [evidence];
+      }
+    }
+
+    if (nextServiceDate && new Date(nextServiceDate) < new Date()) {
+      const error = new Error("Next service date cannot be before the maintenance completion date.");
+      error.statusCode = 400;
+      throw error;
+    }
+
     const maintenance = await Maintenance.create({
       issue,
       asset: issueExists.asset,
@@ -34,7 +66,7 @@ export const createMaintenance = async (req, res, next) => {
       workPerformed,
       parts,
       cost,
-      evidence,
+      evidence: evidenceUrls,
       finalCondition,
       nextServiceDate,
       aiSummary,
@@ -76,7 +108,7 @@ export const getMaintenanceByIssue = async (req, res, next) => {
     })
       .populate("asset", "name assetCode")
       .populate("issue", "issueNumber title")
-      .populate("technician", "name email");
+      .populate("technician", "userName email");
 
     if (!maintenance) {
       return res.status(404).json({
@@ -106,9 +138,40 @@ export const updateMaintenance = async (req, res, next) => {
       });
     }
 
+    const updates = { ...req.body };
+
+    if (typeof updates.parts === "string" && updates.parts) {
+      try {
+        updates.parts = JSON.parse(updates.parts);
+      } catch {
+        delete updates.parts;
+      }
+    }
+
+    if (req.files?.length) {
+      const uploaded = await uploadImages(req.files);
+      const newUrls = uploaded.map((f) => f.url);
+      updates.evidence = [...(maintenance.evidence || []), ...newUrls];
+    } else if (typeof updates.evidence === "string" && updates.evidence) {
+      try {
+        updates.evidence = JSON.parse(updates.evidence);
+      } catch {
+        delete updates.evidence;
+      }
+    }
+
+    if (
+      updates.nextServiceDate &&
+      new Date(updates.nextServiceDate) < new Date(maintenance.completedAt || Date.now())
+    ) {
+      const error = new Error("Next service date cannot be before the maintenance completion date.");
+      error.statusCode = 400;
+      throw error;
+    }
+
     const updatedMaintenance = await Maintenance.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updates,
       {
         new: true,
         runValidators: true,
@@ -116,7 +179,7 @@ export const updateMaintenance = async (req, res, next) => {
     )
       .populate("asset", "name assetCode")
       .populate("issue", "issueNumber title")
-      .populate("technician", "name email");
+      .populate("technician", "userName email");
 
       await createHistory({
         asset: maintenance.asset,
